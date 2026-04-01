@@ -43,7 +43,7 @@ npm run dev
 <table>
   <tr>
     <td align="center">
-      <img src="./assets/app-preview.jpeg" width="300" alt="Dashboard Preview"/>
+      <img src="./assets/home-preview.jpeg" width="300" alt="Dashboard Preview"/>
     </td>
     <td align="center">
       <img src="./assets/focus-preview.jpeg" width="300" alt="Focus Mode Preview"/>
