@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import useLocalStorage from "./useLocalStorage";
 import { requestNotificationPermission, sendNotification, playBeep } from "./notify";
+import { App as CapacitorApp } from "@capacitor/app";
+import { StatusBar } from "@capacitor/status-bar";
 
 type TaskId = string;
 interface Task { id: TaskId; label: string; duration: number; section: Section }
-type Section = "aptitude" | "dsa" | "semester";
+type Section = "aptitude" | "dsa" | "semester" | "todo";
 type Screen = "dashboard" | "session" | "manage" | "progress" | "weekly";
 type TimerState = "idle" | "running" | "paused" | "done";
 
@@ -55,6 +57,7 @@ const META: Record<Section, { label: string; color: string; icon: string }> = {
   aptitude: { label: "Aptitude", color: "#f59e0b", icon: "⚡" },
   dsa:      { label: "DSA Practice", color: "#22d3ee", icon: "⌨" },
   semester: { label: "Semester Study", color: "#a78bfa", icon: "📖" },
+  todo:     { label: "To-Do",      color: "#34d399", icon: "📋" },
 };
 
 function ProgressBar({ value, color, height = 8 }: { value: number; color: string; height?: number }) {
@@ -158,7 +161,10 @@ export default function StudyStack() {
       for (let i = 1; i < diffDays; i++) updates.push(false);
 
       setConsistency(prev => [...prev, ...updates]);
-      setDoneIds([]);
+      setDoneIds(prev => prev.filter(id => {
+        const task = tasks.find(t => t.id === id);
+        return task?.section === "todo";
+      }));
     }
     setLastActiveDate(todayStr);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -229,6 +235,20 @@ export default function StudyStack() {
     justCompletedRef.current = false;
   };
 
+  // Native app back button handling
+  useEffect(() => {
+    if (typeof CapacitorApp !== "undefined") {
+      CapacitorApp.addListener("backButton", ({ canGoBack }) => {
+        if (!canGoBack && screen === "dashboard") {
+          CapacitorApp.exitApp();
+        } else if (screen !== "dashboard") {
+          setScreen("dashboard");
+        }
+      });
+    }
+    try { StatusBar.setBackgroundColor({ color: "#0a0e1a" }); } catch {}
+  }, [screen]);
+
   const containerStyle: React.CSSProperties = {
     minHeight: "100vh", background: "#0a0e1a", color: "#e2e8f0",
     fontFamily: "'DM Sans','Segoe UI',sans-serif",
@@ -297,7 +317,7 @@ export default function StudyStack() {
           </div>
           <ProgressBar value={pct(doneIds.length, tasks.length)} color="#22d3ee" />
           <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-            {(["aptitude","dsa","semester"] as Section[]).map(sec => {
+            {(["todo","aptitude","dsa","semester"] as Section[]).map(sec => {
               const cnt = tasks.filter(t => t.section === sec).length;
               const d = tasks.filter(t => t.section === sec && doneIds.includes(t.id)).length;
               const m = META[sec];
@@ -312,7 +332,7 @@ export default function StudyStack() {
           </div>
         </div>
 
-        {(["aptitude","dsa","semester"] as Section[]).map(sec => {
+        {(["todo","aptitude","dsa","semester"] as Section[]).map(sec => {
           const m = META[sec];
           const secTasks = tasks.filter(t => t.section === sec);
           const secDone = secTasks.filter(t => doneIds.includes(t.id)).length;
@@ -499,7 +519,7 @@ export default function StudyStack() {
           </div>
           <ProgressBar value={pct(doneIds.length, tasks.length)} color="#22d3ee" />
           <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-            {(["aptitude","dsa","semester"] as Section[]).map(sec => {
+            {(["todo","aptitude","dsa","semester"] as Section[]).map(sec => {
               const m = META[sec];
               const secTasks = tasks.filter(t => t.section === sec);
               const d = secTasks.filter(t => doneIds.includes(t.id)).length;
@@ -688,6 +708,7 @@ export default function StudyStack() {
                 <option value="aptitude" style={{ background: "#0a0e1a" }}>Aptitude</option>
                 <option value="dsa" style={{ background: "#0a0e1a" }}>DSA</option>
                 <option value="semester" style={{ background: "#0a0e1a" }}>Semester</option>
+                <option value="todo" style={{ background: "#0a0e1a" }}>To-Do</option>
               </select>
             </div>
             <button onClick={addTask}
@@ -697,7 +718,7 @@ export default function StudyStack() {
           </div>
         </div>
 
-        {(["aptitude","dsa","semester"] as Section[]).map(sec => {
+        {(["todo","aptitude","dsa","semester"] as Section[]).map(sec => {
           const m = META[sec];
           const secTasks = tasks.filter(t => t.section === sec);
           if (secTasks.length === 0) return null;
