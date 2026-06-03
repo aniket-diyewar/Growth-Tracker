@@ -113,27 +113,3 @@ In **Android Studio**, click the green **▶ Run** button. The app will install 
     </td>
   </tr>
 </table>
-
-## 📁 Project Structure
-
-```
-src/
-├── StudyStack.tsx        # Main app (all screens & logic)
-├── useLocalStorage.ts    # Persistence hook
-├── notify.ts             # Beep + browser notification helper
-├── App.tsx               # Entry component
-├── main.tsx              # React root
-assets/                   # App preview images
-android/                  # Native Android project (Capacitor)
-```
-
-## 🧠 How It Works
-
-- **Screens:** HOME, FOCUS, TASKS, STATS, WEEKLY — navigated via bottom tab bar
-- **Daily reset:** Study tasks (Aptitude/DSA/Semester) reset each day; To-Do items persist
-- **Streak:** Auto-calculated from trailing consecutive study days in your consistency log
-- **Timer completion:** Triggers a browser notification + beep, adds session time to total hours
-
-## 📄 License
-
-MIT
